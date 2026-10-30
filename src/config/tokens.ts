@@ -1,4 +1,4 @@
 export const TOKENS = {
-  UserRepository: Symbol("UserRepository"),
-  TaskRepository: Symbol("TaskRepository"),
+  UserRepository: Symbol.for("UserRepository"),
+  TaskRepository: Symbol.for("TaskRepository"),
 } as const;
