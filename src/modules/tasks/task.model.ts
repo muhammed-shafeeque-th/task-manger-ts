@@ -1,4 +1,5 @@
 import { Schema, model, type Types } from "mongoose";
+import { ObjectID } from "../../types/types";
 
 export const TASK_STATUSES = ["todo", "in_progress", "done"] as const;
 export const TASK_PRIORITIES = ["low", "medium", "high"] as const;
@@ -7,14 +8,14 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export interface ITask {
-  _id: Types.ObjectId;
+  _id: ObjectID;
   title: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: Date | null;
   completedAt: Date | null;
-  owner: Types.ObjectId;
+  owner: ObjectID;
   createdAt: Date;
   updatedAt: Date;
 }
