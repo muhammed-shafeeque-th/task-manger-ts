@@ -4,11 +4,12 @@ import { singleton } from 'tsyringe';
 import { env } from '../config/env';
 import { verifyToken } from '../shared/jwt';
 import type { SocketEvent } from './events';
+import { ISocketService } from '../modules/tasks/task.adaptor';
 
 const userRoom = (userId: string) => `user:${userId}`;
 
 @singleton()
-export class SocketService {
+export class SocketService implements ISocketService {
   private io?: Server;
 
   init(httpServer: HttpServer): void {
