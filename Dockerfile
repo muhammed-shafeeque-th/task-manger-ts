@@ -19,7 +19,6 @@ FROM node:${NODE_VERSION} AS prod-deps
 
 WORKDIR /app
 COPY package.json package-lock.json ./
-# FIXED: Removed 'npm cache clean --force'. BuildKit handles the shared mount cleanly without it.
 RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
  # ---- 4. minimal runtime image ------------------------------------------------
