@@ -1,18 +1,6 @@
-import { injectable } from 'tsyringe';
-import { UserModel, type IUser } from './user.model';
-
-export interface CreateUserData {
-  name: string;
-  email: string;
-  passwordHash: string;
-}
-
-export interface IUserRepository {
-  findById(id: string): Promise<IUser | null>;
-  /** Returns the password hash only when `withPassword` is true. */
-  findByEmail(email: string, withPassword?: boolean): Promise<IUser | null>;
-  create(data: CreateUserData): Promise<IUser>;
-}
+import { injectable } from "tsyringe";
+import { IUser, UserModel } from "./user.model";
+import type { CreateUserData, IUserRepository } from "./auth.adaptors";
 
 @injectable()
 export class UserRepository implements IUserRepository {
@@ -20,9 +8,12 @@ export class UserRepository implements IUserRepository {
     return UserModel.findById(id).lean<IUser>();
   }
 
-  async findByEmail(email: string, withPassword = false): Promise<IUser | null> {
+  async findByEmail(
+    email: string,
+    withPassword = false,
+  ): Promise<IUser | null> {
     const query = UserModel.findOne({ email: email.toLowerCase() });
-    if (withPassword) query.select('+passwordHash');
+    if (withPassword) query.select("+passwordHash");
     return query.lean<IUser>();
   }
 

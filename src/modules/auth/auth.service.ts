@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { inject, injectable } from "tsyringe";
 import { TOKENS } from "../../config/tokens";
 import {
@@ -8,19 +7,9 @@ import {
 } from "../../shared/errors";
 import { signToken } from "../../shared/jwt";
 import type { LoginInput, RegisterInput } from "./auth.schemas";
-import type { IUser } from "./user.model";
-import type { IUserRepository } from "./user.repository";
+import type { AuthResult, IAuthService,  IPasswordHasher,  IUserRepository, UserDTO } from "./auth.adaptors";
+import { IUser } from "./user.model";
 
-export interface UserDTO {
-  id: string;
-  name: string;
-  email: string;
-}
-
-export interface AuthResult {
-  user: UserDTO;
-  token: string;
-}
 
 const toUserDTO = (user: IUser): UserDTO => ({
   id: user._id.toString(),
@@ -29,18 +18,19 @@ const toUserDTO = (user: IUser): UserDTO => ({
 });
 
 @injectable()
-export class AuthService {
+export class AuthService implements IAuthService {
   constructor(
-    @inject(TOKENS.UserRepository) private readonly users: IUserRepository,
+    @inject(TOKENS.UserRepository) private readonly userService: IUserRepository,
+    @inject(TOKENS.PasswordHasher) private readonly hasher: IPasswordHasher,
   ) {}
 
   async register(input: RegisterInput): Promise<AuthResult> {
-    const userAlreadyExist = await this.users.findByEmail(input.email);
+    const userAlreadyExist = await this.userService.findByEmail(input.email);
     if (userAlreadyExist) {
       throw new ConflictError("An account with this email already exists");
     }
-    const passwordHash = await bcrypt.hash(input.password, 10);
-    const user = await this.users.create({
+    const passwordHash = await this.hasher.hash(input.password);
+    const user = await this.userService.create({
       name: input.name,
       email: input.email,
       passwordHash,
@@ -52,9 +42,9 @@ export class AuthService {
   }
 
   async login(input: LoginInput): Promise<AuthResult> {
-    const user = await this.users.findByEmail(input.email, true);
+    const user = await this.userService.findByEmail(input.email, true);
     // Same message for unknown email and wrong password to avoid account enumeration.
-    if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
+    if (!user || !(await this.hasher.verify(input.password, user.passwordHash))) {
       throw new UnauthorizedError("Invalid email or password");
     }
     const signedToken = signToken(user._id.toString());
@@ -63,7 +53,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string): Promise<UserDTO> {
-    const user = await this.users.findById(userId);
+    const user = await this.userService.findById(userId);
     if (!user) throw new NotFoundError("User not found");
     return toUserDTO(user);
   }
